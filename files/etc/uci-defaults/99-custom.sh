@@ -7,12 +7,12 @@ echo "Starting 99-custom.sh at $(date)" >>$LOGFILE
 # 因为本项目中 单网口模式是dhcp模式 直接就能上网并且访问web界面 避免新手每次都要修改/etc/config/network中的静态ip
 # 当你刷机运行后 都调整好了 你完全可以在web页面自行关闭 wan口防火墙的入站数据
 # 具体操作方法：网络——防火墙 在wan的入站数据 下拉选项里选择 拒绝 保存并应用即可。
-uci set firewall.@zone[1].input='ACCEPT'
+#uci set firewall.@zone[1].input='ACCEPT'
 
 # 设置主机名映射，解决安卓原生 TV 无法联网的问题
-uci add dhcp domain
-uci set "dhcp.@domain[-1].name=time.android.com"
-uci set "dhcp.@domain[-1].ip=203.107.6.88"
+#uci add dhcp domain
+#uci set "dhcp.@domain[-1].name=time.android.com"
+#uci set "dhcp.@domain[-1].ip=203.107.6.88"
 
 # 检查配置文件pppoe-settings是否存在 该文件由build.sh动态生成
 SETTINGS_FILE="/etc/config/pppoe-settings"
@@ -52,8 +52,10 @@ case "$board_name" in
         ;;
     *)
         # 默认第一个接口为WAN，其余为LAN
-        wan_ifname=$(echo "$ifnames" | awk '{print $1}')
-        lan_ifnames=$(echo "$ifnames" | cut -d ' ' -f2-)
+        #wan_ifname=$(echo "$ifnames" | awk '{print $1}')
+        wan_ifname="eth1"
+        #lan_ifnames=$(echo "$ifnames" | cut -d ' ' -f2-)
+        lan_ifnames="eth0"
         echo "Using default mapping: WAN=$wan_ifname LAN=$lan_ifnames" >>"$LOGFILE"
         ;;
 esac
@@ -100,13 +102,13 @@ elif [ "$count" -gt 1 ]; then
     # 设置路由器管理后台地址
     IP_VALUE_FILE="/etc/config/custom_router_ip.txt"
     if [ -f "$IP_VALUE_FILE" ]; then
-        CUSTOM_IP=$(cat "$IP_VALUE_FILE")
+        CUSTOM_IP='192.168.9.2'
         # 用户在UI上设置的路由器后台管理地址
         uci set network.lan.ipaddr=$CUSTOM_IP
         echo "custom router ip is $CUSTOM_IP" >> $LOGFILE
     else
-        uci set network.lan.ipaddr='192.168.100.1'
-        echo "default router ip is 192.168.100.1" >> $LOGFILE
+        uci set network.lan.ipaddr='192.168.9.2'
+        echo "default router ip is 192.168.9.2" >> $LOGFILE
     fi
 
     # PPPoE设置
@@ -127,11 +129,44 @@ elif [ "$count" -gt 1 ]; then
     uci commit network
 fi
 
+#custom
+# 设置dnsmasq绑定非全部地址<去掉单选框>
+uci set dhcp.@dnsmasq[0].nonwildcard='0'
+# 流量卸载类型设为软件
+uci set firewall.@defaults[0].flow_offloading='1'
+uci set firewall.@defaults[0].flow_offloading_hw='0'
+# WAN口获取IPv6地址设为禁用
+uci set network.wan.ipv6='0'
+
+# LCP响应故障发送12次间隔10秒
+uci set network.wan.keepalive='12 10'
+
+#禁用通告该设备为 IPv6 DNS 服务器
+uci del dhcp.lan.ra_slaac
+uci del dhcp.lan.dhcpv6
+uci set dhcp.lan.dns_service='0'
+
+#禁用IPv6 分配长度,即给lan口分配IPv6,默认分配60
+uci del network.lan.ip6assign
+#禁用委托 IPv6 前缀
+uci set network.lan.delegate='0'
+
+#取消RA标记中其他配置(O)
+uci del dhcp.lan.ra_flags
+uci add_list dhcp.lan.ra_flags='none'
+#禁用SlAAC
+uci set dhcp.lan.ra_slaac='0'
+
+# KMS服务自启
+uci del vlmcsd.config.internet_access
+uci set vlmcsd.config.enabled='1'
+uci set vlmcsd.config.auto_activate='1'
+
 # 设置所有网口可访问网页终端
-uci delete ttyd.@ttyd[0].interface
+#uci delete ttyd.@ttyd[0].interface
 
 # 设置所有网口可连接 SSH
-uci set dropbear.@dropbear[0].Interface=''
+#uci set dropbear.@dropbear[0].Interface=''
 uci commit
 
 # 设置编译作者信息
