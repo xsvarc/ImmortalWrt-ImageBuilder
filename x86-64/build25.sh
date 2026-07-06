@@ -57,6 +57,14 @@ PACKAGES="$PACKAGES luci-i18n-package-manager-zh-cn"
 #PACKAGES="$PACKAGES luci-i18n-ttyd-zh-cn"
 PACKAGES="$PACKAGES openssh-sftp-server"
 
+PACKAGES="$PACKAGES ddns-scripts-cloudflare"
+PACKAGES="$PACKAGES ddns-scripts-dnspod"
+PACKAGES="$PACKAGES bind-dig"
+PACKAGES="$PACKAGES bind-host"
+PACKAGES="$PACKAGES tcping"
+PACKAGES="$PACKAGES htop"
+PACKAGES="$PACKAGES procps-ng-ps"
+
 # 文件管理器
 #PACKAGES="$PACKAGES luci-i18n-filemanager-zh-cn"
 # ======== shell/apk-custom-packages.sh =======
